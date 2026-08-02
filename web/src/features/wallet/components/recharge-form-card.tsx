@@ -477,15 +477,7 @@ export function RechargeFormCard({
             </>
           )}
         </div>
-      ) : (
-        <Alert>
-          <AlertDescription>
-            {t(
-              'Online topup is not enabled. Please use redemption code or contact administrator.'
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
+      ) : null}
 
       {/* Creem Products Section */}
       {enableCreemTopup &&
@@ -522,7 +514,7 @@ export function RechargeFormCard({
               id='redemption-code'
               value={redemptionCode}
               onChange={(e) => onRedemptionCodeChange(e.target.value)}
-              placeholder={t('Enter your redemption code')}
+              placeholder={t('Click the recharge option below, then enter the code')}
               className='h-9 min-w-0'
             />
             <Button
@@ -536,18 +528,21 @@ export function RechargeFormCard({
             </Button>
           </div>
           {topupLink && (
-            <p className='text-muted-foreground text-xs'>
-              {t('Need a redemption code?')}{' '}
-              <a
-                href={topupLink}
-                target='_blank'
-                rel='noopener noreferrer'
-                className='inline-flex items-center gap-1 underline-offset-4 hover:underline'
-              >
-                {t('Get one here')}
-                <ExternalLink className='h-3 w-3' />
-              </a>
-            </p>
+            <Button
+              variant='outline'
+              size='lg'
+              className='w-full'
+              render={
+                <a
+                  href={topupLink}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                />
+              }
+            >
+              {t('Recharge here')}
+              <ExternalLink />
+            </Button>
           )}
         </div>
       ) : (

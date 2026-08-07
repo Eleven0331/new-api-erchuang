@@ -54,3 +54,44 @@ func Playground(c *gin.Context) {
 
 	Relay(c, types.RelayFormatOpenAI)
 }
+
+// PlaygroundImage exposes image generation to the signed-in web application.
+// It deliberately creates the same short-lived per-request token as the chat
+// playground, so Relay performs normal channel selection and wallet billing.
+func PlaygroundImage(c *gin.Context) {
+	var newAPIError *types.NewAPIError
+
+	defer func() {
+		if newAPIError != nil {
+			c.JSON(newAPIError.StatusCode, gin.H{"error": newAPIError.ToOpenAIError()})
+		}
+	}()
+
+	if c.GetBool("use_access_token") {
+		newAPIError = types.NewError(errors.New("access token is not supported for the image playground"), types.ErrorCodeAccessDenied, types.ErrOptionWithSkipRetry())
+		return
+	}
+
+	relayInfo, err := relaycommon.GenRelayInfo(c, types.RelayFormatOpenAIImage, nil, nil)
+	if err != nil {
+		newAPIError = types.NewError(err, types.ErrorCodeInvalidRequest, types.ErrOptionWithSkipRetry())
+		return
+	}
+
+	userID := c.GetInt("id")
+	userCache, err := model.GetUserCache(userID)
+	if err != nil {
+		newAPIError = types.NewError(err, types.ErrorCodeQueryDataError, types.ErrOptionWithSkipRetry())
+		return
+	}
+	userCache.WriteContext(c)
+
+	tempToken := &model.Token{
+		UserId: userID,
+		Name:   fmt.Sprintf("image-playground-%s", relayInfo.UsingGroup),
+		Group:  relayInfo.UsingGroup,
+	}
+	_ = middleware.SetupContextForToken(c, tempToken)
+
+	Relay(c, types.RelayFormatOpenAIImage)
+}

@@ -691,8 +691,31 @@ For commercial licensing, please contact support@quantumnous.com
   animation: auto-group-flow-border-travel 3.2s linear infinite;
 }
 
+@keyframes image-generation-scan {
+  0% {
+    transform: translateX(-140%);
+    opacity: 0;
+  }
+  18%,
+  78% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: translateX(420%);
+    opacity: 0;
+  }
+}
+
+.image-generation-scan {
+  animation: image-generation-scan 2.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .auto-group-flow-border {
     display: none;
+  }
+
+  .image-generation-scan {
+    animation: none;
   }
 }

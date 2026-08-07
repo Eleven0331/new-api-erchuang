@@ -22,10 +22,10 @@ import {
   CreditCard,
   FileText,
   Headset,
+  Image,
   Key,
   LayoutDashboard,
   ListTodo,
-  MessageSquare,
   Radio,
   ServerCog,
   Settings,
@@ -60,9 +60,18 @@ export function useSidebarData(): SidebarData {
             icon: Headset,
           },
           {
-            title: t('Chat'),
-            icon: MessageSquare,
-            type: 'chat-presets',
+            title: t('Image Generation Zone'),
+            icon: Image,
+            items: [
+              {
+                title: t('GPT image 2生图'),
+                url: '/image-generation',
+              },
+              {
+                title: t('Gemini 生图'),
+                url: '/image-generation/gemini',
+              },
+            ],
           },
         ],
       },

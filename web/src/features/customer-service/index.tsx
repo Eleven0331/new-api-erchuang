@@ -1,4 +1,12 @@
-import { Headset, Send, ShieldCheck, UserRound } from 'lucide-react'
+import {
+  AlertCircle,
+  Headset,
+  LoaderCircle,
+  RefreshCw,
+  Send,
+  ShieldCheck,
+  UserRound,
+} from 'lucide-react'
 import { type FormEvent, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -39,8 +47,11 @@ export function CustomerService() {
   const [inbox, setInbox] = useState<SupportInbox | null>(null)
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
   const loadMessages = useCallback(async () => {
+    setLoadError(false)
     try {
       const response = await api.get('/api/user/support/messages', {
         skipErrorHandler: true,
@@ -54,7 +65,9 @@ export function CustomerService() {
         })
       }
     } catch {
-      // The page remains usable while an operator rolls out the matching API.
+      setLoadError(true)
+    } finally {
+      setLoading(false)
     }
   }, [])
 
@@ -110,10 +123,30 @@ export function CustomerService() {
         <div className='mx-auto flex w-full max-w-4xl flex-col gap-5 px-5 py-6 sm:px-8'>
           <div className='text-muted-foreground flex items-center gap-2 text-xs'>
             <span className='h-px flex-1 bg-border' />
-            {t('Messages refresh automatically')}
+            <span className='inline-flex items-center gap-1.5 whitespace-nowrap'>
+              <span className={cn('size-1.5 rounded-full', loadError ? 'bg-destructive' : 'bg-emerald-500')} />
+              {loadError ? t('Loading failed') : t('Messages refresh automatically')}
+            </span>
             <span className='h-px flex-1 bg-border' />
           </div>
-          {messages.length ? (
+          {loading ? (
+            <div className='flex min-h-64 flex-col justify-center gap-3'>
+              {[0, 1, 2].map((item) => (
+                <div key={item} className={cn('h-14 w-2/3 animate-pulse rounded-lg bg-muted', item === 1 && 'ml-auto')} />
+              ))}
+            </div>
+          ) : loadError && !messages.length ? (
+            <div className='flex min-h-64 flex-col items-center justify-center gap-3 text-center'>
+              <div className='flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive'>
+                <AlertCircle className='size-6' />
+              </div>
+              <p className='font-medium'>{t('Loading failed')}</p>
+              <Button type='button' variant='outline' size='sm' onClick={() => void loadMessages()}>
+                <RefreshCw className='size-4' />
+                {t('Refresh')}
+              </Button>
+            </div>
+          ) : messages.length ? (
             messages.map((message) => {
               const isOwnMessage = message.sender_id === currentUserId
               return (
@@ -156,8 +189,8 @@ export function CustomerService() {
       <form onSubmit={handleSubmit} className='shrink-0 border-t bg-background px-5 py-4 sm:px-8'>
         <div className='mx-auto flex w-full max-w-4xl items-end gap-3'>
           <Textarea value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={t('Describe your issue...')} className='min-h-20 resize-none' maxLength={2000} />
-          <Button type='submit' className='h-10 px-4' disabled={!draft.trim() || sending}>
-            <Send />
+          <Button type='submit' className='h-10 shrink-0 px-4' disabled={!draft.trim() || sending}>
+            {sending ? <LoaderCircle className='animate-spin' /> : <Send />}
             {isStaff ? t('Reply') : t('Send inquiry')}
           </Button>
         </div>

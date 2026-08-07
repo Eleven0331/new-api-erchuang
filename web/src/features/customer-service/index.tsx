@@ -13,7 +13,7 @@ type SupportMessage = {
   sender_id: number
   sender_name: string
   content: string
-  created_at: number
+  created_at: number | string
   is_staff: boolean
 }
 
@@ -23,11 +23,15 @@ type SupportInbox = {
   current_user_id: number
 }
 
-function formatMessageTime(timestamp: number) {
+function formatMessageTime(timestamp: number | string) {
+  const value = Number(timestamp)
+  const date = new Date(value * 1000)
+  if (!Number.isFinite(value) || Number.isNaN(date.getTime())) return '--:--'
+
   return new Intl.DateTimeFormat(undefined, {
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date(timestamp * 1000))
+  }).format(date)
 }
 
 export function CustomerService() {
@@ -41,7 +45,14 @@ export function CustomerService() {
       const response = await api.get('/api/user/support/messages', {
         skipErrorHandler: true,
       })
-      if (response.data?.success) setInbox(response.data.data)
+      const data = response.data?.data
+      if (response.data?.success && data && typeof data === 'object') {
+        setInbox({
+          messages: Array.isArray(data.messages) ? data.messages : [],
+          is_staff: Boolean(data.is_staff),
+          current_user_id: Number(data.current_user_id) || 0,
+        })
+      }
     } catch {
       // The page remains usable while an operator rolls out the matching API.
     }
@@ -71,6 +82,7 @@ export function CustomerService() {
 
   const isStaff = inbox?.is_staff ?? false
   const currentUserId = inbox?.current_user_id
+  const messages = inbox?.messages ?? []
 
   return (
     <div className='flex size-full min-h-0 flex-col bg-background'>
@@ -101,8 +113,8 @@ export function CustomerService() {
             {t('Messages refresh automatically')}
             <span className='h-px flex-1 bg-border' />
           </div>
-          {inbox?.messages.length ? (
-            inbox.messages.map((message) => {
+          {messages.length ? (
+            messages.map((message) => {
               const isOwnMessage = message.sender_id === currentUserId
               return (
                 <article
@@ -119,11 +131,11 @@ export function CustomerService() {
                   </Avatar>
                   <div className={cn('space-y-1', isOwnMessage && 'text-right')}>
                     <div className='text-muted-foreground flex items-center gap-2 text-xs'>
-                      <span>{message.sender_name}</span>
+                      <span>{String(message.sender_name || '')}</span>
                       <time>{formatMessageTime(message.created_at)}</time>
                     </div>
                     <p className={cn('rounded-lg px-3 py-2 text-sm leading-6 whitespace-pre-wrap', message.is_staff ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
-                      {message.content}
+                      {String(message.content || '')}
                     </p>
                   </div>
                 </article>
